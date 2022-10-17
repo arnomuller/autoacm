@@ -1,0 +1,4 @@
+library(autoacm)
+autoacm()
+
+
