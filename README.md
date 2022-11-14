@@ -1,5 +1,6 @@
 # autoacm
 Package R : Shiny facilitant l'exploration d'ACM à la française.
+Version en développement
 
 ## Démarrage de l'application
 
