@@ -11,17 +11,17 @@ Version en développement
 install.packages("devtools")
 ```
 
-2) Installer le package "statdesk"
+2) Installer le package "autoacm"
 
 ```{r }
 library("devtools")
-install_github("arnomuller/statdesk")
+install_github("arnomuller/autoacm")
 ```
 
 3) Lancer l'application
 ```{r }
-library(statdesk)
-statdesk()
+library(autoacm)
+autoacm()
 ```
 
 
