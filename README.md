@@ -18,6 +18,22 @@ library("devtools")
 install_github("arnomuller/autoacm")
 ```
 
+2bis) *Durant l'installation*
+
+Le message suivant peut apparaître dans la console : 
+
+> install_github("arnomuller/autoacm")
+Downloading GitHub repo arnomuller/autoacm@HEAD
+These packages have more recent versions available.
+It is recommended to update all of them.
+Which would you like to update?
+ 1: All                                           
+ 2: CRAN packages only                            
+ 3: None 
+
+Dans ce cas, rentrez 1 dans la console puis ENTER, pour installer toutes les dépendances.
+
+
 3) Lancer l'application
 ```{r }
 library(autoacm)
