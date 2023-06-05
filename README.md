@@ -2,6 +2,30 @@
 Package R : Shiny facilitant l'exploration d'ACM à la française.
 Version en développement
 
+
+## Installation depuis Github
+
+1) Dans R, installer le package "devtools"
+
+```{r }
+install.packages("devtools")
+```
+
+2) Installer le package "statdesk"
+
+```{r }
+library("devtools")
+install_github("arnomuller/statdesk")
+```
+
+3) Lancer l'application
+```{r }
+library(statdesk)
+statdesk()
+```
+
+
+
 ## Démarrage de l'application
 
 ![](https://github.com/arnomuller/autoacm/blob/main/img/autoacm_start.gif)
