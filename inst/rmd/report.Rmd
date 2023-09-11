@@ -1,0 +1,562 @@
+---
+title: "Rapport automatisé"
+author: "autoacm"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    toc: true
+params:
+  name_data: NA
+  n_data: NA
+  n_souspop: NA
+  axe_X: NA
+  axe_Y: NA
+  seuil: NA
+  taille_label: NA
+  meth_dist: NA
+  ncluster: NA
+  indic_cah: NA
+  is_html: NA
+  
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+
+## Sous-Population 
+
+Données utilisées : **`r params$name_data`**  
+Nombre d'individus en entrée : **`r params$n_data`**  
+Sous-population sélectionnée pour l'ACM : **`r params$n_souspop`** lignes 
+
+ <br>
+
+Sélection : `r if(exists("tableau_modalite") == FALSE){'**Pas de sélection de sous-population**'}else{kable(tableau_modalite)}`
+
+<br>
+<br>
+
+
+## Paramètres de l'ACM
+
+**Variables actives :** `r if(exists("var_act") == FALSE){"Pas d'ACM"} else if(is.null(var_act) == TRUE){'Pas de variables actives'}else{var_act}`  
+**Variables supplémentaire :** `r if(exists("var_sup") == FALSE){"Pas d'ACM"} else if(is.null(var_sup) == TRUE){'Pas de variables actives'}else{var_sup}`  
+**Variable de pondération :** `r if(exists("var_ponder") == FALSE){"Pas d'ACM"} else if(var_ponder == ""){'Pas de pondération'}else{var_ponder}`  
+
+**Somme de la pondération : **`r if(exists("var_ponder") == FALSE){"Pas d'ACM"} else if(var_ponder == ""){'Pas de pondération'}else{sum(ponder)}`
+
+
+
+<br>
+<br>
+
+
+
+## Tris à plats
+
+<br>
+
+### Variables actives
+
+```{r tri_act, echo=FALSE, eval= exists("var_act"), results='asis'}
+
+if(params$is_html == "HTML"){
+  if(var_ponder != ""){
+    
+
+    for (i in c(1:length(var_act))) {
+      eff <- with(data_acm, addmargins(table(get(var_act[i]), useNA = "always")))
+      pct <- round(with(data_acm, addmargins(prop.table(table(get(var_act[i]), useNA = "always"))))*100,2)
+      weff <- round(with(data_acm, addmargins(wtd.table(get(var_act[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))),2)
+      wpct <- round(with(data_acm, addmargins(prop.table(wtd.table(get(var_act[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))))*100,2)
+      
+      hop <- as.data.frame(cbind(eff,pct,weff, wpct))
+      hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+      hop <- hop %>% select(modalite, everything())
+      
+      cat(paste("#### Variable :", var_act[i]), "\n")
+      
+      hip <- hop %>%
+        gt(rowname_col = "modalite") %>%
+        tab_header(
+          title = var_act[i]) %>% 
+        tab_spanner(
+          label = "Table Brute",
+          columns = c(eff, pct)) %>% 
+        tab_spanner(
+          label = "Table Pondérée",
+          columns = c(weff, wpct)) %>%
+        cols_label(
+          eff = "Effectifs",
+          pct = "Proportions",
+          weff = "Effectifs",
+          wpct = "Proportions")
+      
+      print(htmltools::tagList(hip))
+      cat( "\n")
+    }
+  } 
+  else{
+    for (i in c(1:length(var_act))) {
+      eff <- with(data_acm, addmargins(table(get(var_act[i]), useNA = "always")))
+      pct <- round(with(data_acm, addmargins(prop.table(table(get(var_act[i]), useNA = "always"))))*100,2)
+      
+      hop <- as.data.frame(cbind(eff,pct))
+      hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+      hop <- hop %>% select(modalite, everything())
+      
+      cat(paste("#### Variable :", var_act[i]), "\n")
+      
+      hip <- hop %>%
+        gt(rowname_col = "modalite") %>%
+        tab_header(
+          title = var_act[i]) %>% 
+        tab_spanner(
+          label = "Table Brute",
+          columns = c(eff, pct)) %>% 
+        cols_label(
+          eff = "Effectifs",
+          pct = "Proportions")
+      
+      print(htmltools::tagList(hip))
+      cat( "\n")
+    }
+  }
+  
+}else{
+  
+  if(var_ponder != ""){
+    
+    for (i in c(1:length(var_act))) {
+      
+      eff <- with(data_acm, addmargins(table(get(var_act[i]), useNA = "always")))
+      pct <- round(with(data_acm, addmargins(prop.table(table(get(var_act[i]), useNA = "always"))))*100,2)
+      weff <- round(with(data_acm, addmargins(wtd.table(get(var_act[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))),2)
+      wpct <- round(with(data_acm, addmargins(prop.table(wtd.table(get(var_act[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))))*100,2)
+      
+      hop <- as.data.frame(cbind(eff,pct,weff, wpct))
+      hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+      hop <- hop %>% select(modalite, everything())
+      
+      cat(paste("#### Variable :", var_act[i]), "\n")
+      
+      hip <- flextable(hop)
+      hip <- add_header_row(hip,
+                            colwidths = c(1,2, 2),
+                            values = c("",paste( var_act[i],"Brute"), paste( var_act[i], "Pondérée")))
+      hip <- set_header_labels(hip,
+                               modalite = "Modalités",
+                               eff = "Effectifs", 
+                               pct = "Pourcentages",
+                               weff = "Effectifs", 
+                               wpct = "Pourcentages")
+      hip <- theme_vanilla(hip)
+      hip <- autofit(hip)
+      
+      flextable_to_rmd(hip)
+      cat( "\n")
+    }
+  } 
+  else{
+    
+    for (i in c(1:length(var_act))) {
+      
+      eff <- with(data_acm, addmargins(table(get(var_act[i]), useNA = "always")))
+      pct <- round(with(data_acm, addmargins(prop.table(table(get(var_act[i]), useNA = "always"))))*100,2)
+      
+      hop <- as.data.frame(cbind(eff,pct))
+      hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+      hop <- hop %>% select(modalite, everything())
+      
+      cat(paste("#### Variable :", var_act[i]), "\n")
+      
+      hip <- flextable(hop)
+      hip <- add_header_row(hip,
+                            colwidths = c(1,2),
+                            values = c("",var_act[i]))
+      hip <- set_header_labels(hip,
+                               modalite = "Modalités",
+                               eff = "Effectifs", 
+                               pct = "Pourcentages")
+      hip <- theme_vanilla(hip)
+      hip <- autofit(hip)
+      
+      flextable_to_rmd(hip)
+      cat( "\n")
+    }
+    
+    
+    
+    
+  }
+  
+  
+}
+
+
+```
+
+
+<br>
+
+### Variables supplémentaires
+
+
+
+```{r tri_sup, echo=FALSE, eval= exists("var_sup"), results='asis'}
+
+if(is.null(var_sup) == TRUE){
+  cat("Pas de variables supplémentaires")
+}else{
+  
+  if(params$is_html == "HTML"){
+    if(var_ponder != ""){
+      
+      
+      for (i in c(1:length(var_sup))) {
+        eff <- with(data_acm, addmargins(table(get(var_sup[i]), useNA = "always")))
+        pct <- round(with(data_acm, addmargins(prop.table(table(get(var_sup[i]), useNA = "always"))))*100,2)
+        weff <- round(with(data_acm, addmargins(wtd.table(get(var_sup[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))),2)
+        wpct <- round(with(data_acm, addmargins(prop.table(wtd.table(get(var_sup[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))))*100,2)
+        
+        hop <- as.data.frame(cbind(eff,pct,weff, wpct))
+        hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+        hop <- hop %>% select(modalite, everything())
+        
+        cat(paste("#### Variable :", var_sup[i]), "\n")
+        
+        hip <- hop %>%
+          gt(rowname_col = "modalite") %>%
+          tab_header(
+            title = var_sup[i]) %>% 
+          tab_spanner(
+            label = "Table Brute",
+            columns = c(eff, pct)) %>% 
+          tab_spanner(
+            label = "Table Pondérée",
+            columns = c(weff, wpct)) %>%
+          cols_label(
+            eff = "Effectifs",
+            pct = "Proportions",
+            weff = "Effectifs",
+            wpct = "Proportions")
+        
+        print(htmltools::tagList(hip))
+        cat( "\n")
+      }
+    } 
+    else{
+      for (i in c(1:length(var_sup))) {
+        eff <- with(data_acm, addmargins(table(get(var_sup[i]), useNA = "always")))
+        pct <- round(with(data_acm, addmargins(prop.table(table(get(var_sup[i]), useNA = "always"))))*100,2)
+        
+        hop <- as.data.frame(cbind(eff,pct))
+        hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+        hop <- hop %>% select(modalite, everything())
+        
+        cat(paste("#### Variable :", var_sup[i]), "\n")
+        
+        hip <- hop %>%
+          gt(rowname_col = "modalite") %>%
+          tab_header(
+            title = var_sup[i]) %>% 
+          tab_spanner(
+            label = "Table Brute",
+            columns = c(eff, pct)) %>% 
+          cols_label(
+            eff = "Effectifs",
+            pct = "Proportions")
+        
+        print(htmltools::tagList(hip))
+        cat( "\n")
+      }
+    }
+    
+  }else{
+    
+    if(var_ponder != ""){
+      
+      for (i in c(1:length(var_sup))) {
+        
+        eff <- with(data_acm, addmargins(table(get(var_sup[i]), useNA = "always")))
+        pct <- round(with(data_acm, addmargins(prop.table(table(get(var_sup[i]), useNA = "always"))))*100,2)
+        weff <- round(with(data_acm, addmargins(wtd.table(get(var_sup[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))),2)
+        wpct <- round(with(data_acm, addmargins(prop.table(wtd.table(get(var_sup[i]), weights = as.numeric(as.character(ponder)), useNA = "always"))))*100,2)
+        
+        hop <- as.data.frame(cbind(eff,pct,weff, wpct))
+        hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+        hop <- hop %>% select(modalite, everything())
+        
+        cat(paste("#### Variable :", var_sup[i]), "\n")
+        
+        hip <- flextable(hop)
+        hip <- add_header_row(hip,
+                              colwidths = c(1,2, 2),
+                              values = c("",paste(var_sup[i],"Brute"), paste(var_sup[i],"Pondérée")))
+        hip <- set_header_labels(hip,
+                                 modalite = "Modalités",
+                                 eff = "Effectifs", 
+                                 pct = "Pourcentages",
+                                 weff = "Effectifs", 
+                                 wpct = "Pourcentages")
+        hip <- theme_vanilla(hip)
+        hip <- autofit(hip)
+        flextable_to_rmd(hip)
+        cat( "\n")
+      }
+    } 
+    else{
+      
+      for (i in c(1:length(var_sup))) {
+        
+        eff <- with(data_acm, addmargins(table(get(var_sup[i]), useNA = "always")))
+        pct <- round(with(data_acm, addmargins(prop.table(table(get(var_sup[i]), useNA = "always"))))*100,2)
+        
+        hop <- as.data.frame(cbind(eff,pct))
+        hop$modalite <- c(names(eff[c(1:(length(eff)-2))]),"Valeurs Manquantes", "TOTAL")
+        hop <- hop %>% select(modalite, everything())
+        
+        cat(paste("#### Variable :", var_sup[i]), "\n")
+        
+        hip <- flextable(hop)
+        hip <- add_header_row(hip,
+                              colwidths = c(1,2),
+                              values = c("",var_sup[i]))
+        hip <- set_header_labels(hip,
+                                 modalite = "Modalités",
+                                 eff = "Effectifs", 
+                                 pct = "Pourcentages")
+        hip <- theme_vanilla(hip)
+        hip <- autofit(hip)
+        flextable_to_rmd(hip)
+        cat( "\n")
+        
+      }
+      
+      
+      
+      
+    }
+    
+    
+  }
+}
+
+```
+
+
+
+
+
+
+<br>
+<br>
+
+## Graphiques
+
+### Sauts d'inertie
+
+
+
+```{r g_inert, echo=FALSE, eval= exists("variances"), fig.height = 8, fig.width = 12, fig.align = "center"}
+
+ggplot(variances, aes(x = Axes)) +     # initialiser du graphique et de l'axe horizontal
+  geom_bar(aes(y = `% de variance`),   # indiquer le type de graphique (barplot) et la variable à représenter sur l'axe vertical
+           stat = "identity",
+           fill = "lightgrey") +       # parce que j'aime bien le rouge
+  xlab("") +                           # on enlève le label de l'axe des x, pas très utile
+  ylab("% de variance") +              # renommer proprement le label de l'axe des y
+  theme_minimal()                     
+
+
+```
+
+
+
+#### Sauts d'inertie (critère de Benzécri)
+
+
+```{r g_benz, echo=FALSE, eval= exists("variances_modif"), fig.height = 8, fig.width = 12, fig.align = "center"}
+
+ggplot(variances_modif, aes(x = reorder(row.names(variances_modif), -mrate))) + 
+      geom_bar(aes(y = modif.rate(res_mca)$modif$mrate),                            
+               stat = "identity", 
+               fill = "red") +                                                      
+      xlab("") +                                                                    
+      ylab("% de variance") +                                                      
+      theme_minimal()
+
+    
+    
+```
+
+
+<br>
+<br>
+
+
+### Graphique des variables actives
+
+
+
+```{r acm_act, echo=FALSE, eval= exists("resultats_actives"), fig.height = 18, fig.width = 15, fig.align = "center"}
+
+
+resultats_actives %>% 
+      mutate(modalites = substr(modalites, nchar(variables)+2, nchar(modalites))) %>%
+      filter(get(paste0("dim",params$axe_X,"_contrib")) > params$seuil |
+               get(paste0("dim",params$axe_Y,"_contrib")) > params$seuil) %>%   
+      ggplot(aes(x = get(paste0("dim",params$axe_X,"_coord")), y = get(paste0("dim",params$axe_Y,"_coord")), 
+                 label = modalites,      
+                 shape = variables,       
+                 colour = variables,
+                 size = 15)) +                                                
+      
+      geom_point() +                                                       
+      geom_text_repel(size = params$taille_label, segment.alpha = 0.5) +       
+      coord_fixed() +                                                         
+      
+      geom_hline(yintercept = 0, colour = "darkgrey", linetype="longdash") +  
+      geom_vline(xintercept = 0, colour = "darkgrey", linetype="longdash") + 
+      
+      xlab(paste0("Axe", params$axe_X ,"(", round(variances[params$axe_X, 2], 1), " %)")) + 
+      ylab(paste0("Axe", params$axe_Y ,"(", round(variances[params$axe_Y, 2], 1), " %)")) + 
+      
+      scale_shape_manual(name="", values = 0:20) +                           
+      
+      guides(colour=guide_legend(title="", nrow = 2),                        
+             size = "none",                                                 
+             shape = "none") + 
+      
+      theme_minimal(base_size = 18) +                                         
+      
+      theme(legend.position="bottom", legend.text = element_text(size = 20)) 
+
+
+```
+
+
+
+### Graphiques des variables actives et supplémentaires
+
+```{r acm_act_sup, echo=FALSE, warning=FALSE, eval= exists("resultats_complet"), fig.height = 18, fig.width = 15, fig.align = "center"}
+
+resultats_complet %>% 
+      mutate(modalites = substr(modalites, nchar(variables)+2, nchar(modalites))) %>%
+      filter(get(paste0("dim",params$axe_X,"_contrib")) > params$seuil |
+               get(paste0("dim",params$axe_Y,"_contrib")) > params$seuil |
+               is.na(get(paste0("dim",params$axe_X,"_contrib"))) == T |
+               is.na(get(paste0("dim",params$axe_Y,"_contrib"))) == T) %>%    
+      
+      ggplot(aes(x = get(paste0("dim",params$axe_X,"_coord")), y = get(paste0("dim",params$axe_Y,"_coord")), 
+                 label = modalites,
+                 shape = variables,
+                 colour = type,                                               # on distingue par des couleurs différentes les variables actives et supplémentaires
+                 size = 15)) + 
+      
+      geom_point() +
+      geom_text_repel(size = params$taille_label, segment.alpha = 0.5) +
+      coord_fixed() +
+      
+      geom_hline(yintercept = 0, colour = "darkgrey", linetype="longdash") +
+      geom_vline(xintercept = 0, colour = "darkgrey", linetype="longdash") +
+      
+      xlab(paste0("Axe", params$axe_X ,"(", round(variances[params$axe_X, 2], 1), " %)")) +
+      ylab(paste0("Axe", params$axe_Y ,"(", round(variances[params$axe_Y, 2], 1), " %)")) +
+      
+      scale_shape_manual(name="", values = 0:20) +
+      scale_color_manual(values = c("black", "red")) + 
+      guides(shape = "none",
+             colour = guide_legend(title= "Type de variable",                 
+                                   title.position = "top",
+                                   nrow = 2),
+             size = "none") + # toujours pas de légende pour les tailles de point
+      
+      theme_minimal(base_size = 18) +
+      theme(legend.position="bottom", legend.text = element_text(size = 20))
+
+
+```
+
+
+
+
+
+### Graphique des individus
+
+```{r acm_ind, echo=FALSE, eval= exists("resultats_complet"), fig.height = 18, fig.width = 15, fig.align = "center"}
+
+    ggplot(coord_indiv, aes(x = get(paste0("Dim ", params$axe_X)), y = get(paste0("Dim ", params$axe_Y)))) +  
+      geom_point(alpha = 0.6,          
+                 colour = "#E41A1C") + 
+      coord_fixed() +
+      
+      geom_hline(yintercept = 0, colour = "darkgrey", linetype="longdash") +
+      geom_vline(xintercept = 0, colour = "darkgrey", linetype="longdash") +
+      
+      xlab(paste0("Axe 1 (", round(variances[params$axe_X, 2], 1), " %)")) +
+      ylab(paste0("Axe 2 (", round(variances[params$axe_Y, 2], 1), " %)")) +
+      
+      guides(colour = "none") +        
+      
+      theme_minimal(base_size = 18)
+
+```
+
+
+
+
+
+## Classification
+
+
+
+
+Mesure des distances entre individus : **`r if(indic_cah == "Non"){'Pas de classification'}else{params$meth_dist}`**  
+
+### Dendrogramme
+
+
+```{r classif, echo=FALSE, eval= indic_cah == "Oui", fig.height = 6, fig.width = 10, fig.align = "center"}
+
+
+# if(exists("ncluster") == TRUE){
+if(indic_cah != "Non"){
+  if(ncluster >= 1){      
+    
+    
+    
+    plot(arbre, labels = FALSE, main = "Choix de la partition",
+         xlab = "", ylab = "", sub = "",
+         axes = FALSE, hang = -1)
+    rect.hclust(arbre, params$ncluster, border = "red")
+    
+    
+    plot(inertie[1:20], type = "s", xlab = "Nombre de classes", ylab = "Inertie")
+    points(params$ncluster, inertie[params$ncluster], col = "red", cex = 2, lwd = 3)
+    
+    
+    
+  }
+}
+
+      
+```
+
+
+### Distribution dans les classes
+
+`r if(indic_cah == "Non"){'**Pas de classification**'}else{kable(table(cutree(arbre, params$ncluster)), col.names = c('Cluster','Fréquence'))}`
+
+
+
+
+
+
+

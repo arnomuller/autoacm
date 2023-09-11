@@ -18,21 +18,14 @@ knitr::opts_chunk$set(
 library(autoacm)
 ```
 
-# Utiliser le package autoacm
 
-
+# Utiliser autoacm()
 
 ```{r}
-
-#autoacm()
-
-
+#autoacm::autoacm()
 ```
 
-
-
-
-
-
+La fonction ci-dessus ouvre une interface pour faire des ACMs de bout en bout.
+Pour plus d'information voir : lien
 
 
