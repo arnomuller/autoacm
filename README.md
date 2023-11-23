@@ -2,6 +2,8 @@
 Interface Shiny pour faire des ACM.
 **Documentation en cours de rédaction.**
 
+Le package a été développé avec la version 4.3 de R.
+
 ## Installation du package
 
 ### Solution 1
